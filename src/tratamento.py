@@ -9,3 +9,8 @@ print(df.dtypes)
 
 print("\nValores nulos:")
 print(df.isnull().sum())
+
+df["data"] = pd.to_datetime(df["data"], format="%Y-%m-%d")
+
+print("\nTipos após tratamento:")
+print(df.dtypes)
