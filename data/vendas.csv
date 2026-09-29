@@ -1,0 +1,11 @@
+id_venda,data,produto,categoria,quantidade,preco,cidade
+1,2026-01-05,Notebook,Eletronicos,1,3500,Recife
+2,2026-01-06,Mouse,Acessorios,2,80,Olinda
+3,2026-01-08,Teclado,Acessorios,1,150,Recife
+4,2026-01-10,Monitor,Eletronicos,1,1200,Jaboatao
+5,2026-01-12,Mouse,Acessorios,3,80,Recife
+6,2026-01-15,Notebook,Eletronicos,2,3500,Olinda
+7,2026-01-17,Headset,Acessorios,2,250,Recife
+8,2026-01-20,Monitor,Eletronicos,1,1200,Olinda
+9,2026-01-22,Teclado,Acessorios,2,150,Jaboatao
+10,2026-01-25,Notebook,Eletronicos,1,3500,Recife
