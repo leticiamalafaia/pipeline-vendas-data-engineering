@@ -12,5 +12,10 @@ print(df.isnull().sum())
 
 df["data"] = pd.to_datetime(df["data"], format="%Y-%m-%d")
 
+df["faturamento"] = df["quantidade"] * df["preco"]
+
+print("\nDados com faturamento:")
+print(df[["produto", "quantidade", "preco", "faturamento"]])
+
 print("\nTipos após tratamento:")
 print(df.dtypes)
