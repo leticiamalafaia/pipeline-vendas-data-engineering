@@ -14,6 +14,8 @@ df["data"] = pd.to_datetime(df["data"], format="%Y-%m-%d")
 
 df["faturamento"] = df["quantidade"] * df["preco"]
 
+df.to_csv("data/vendas_tratadas.csv", index=False)
+
 print("\nDados com faturamento:")
 print(df[["produto", "quantidade", "preco", "faturamento"]])
 
