@@ -14,6 +14,9 @@ def validar_dados(df):
     print("\nValores nulos:")
     print(df.isnull().sum())
 
+    if df.isnull().sum().sum() > 0:
+    
+
 
 def transformar_dados(df):
     df["data"] = pd.to_datetime(df["data"], format="%Y-%m-%d")
