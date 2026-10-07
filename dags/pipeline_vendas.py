@@ -9,7 +9,14 @@ with DAG(
     catchup=False,
 ) as dag:
 
+    testar_qualidade = BashOperator(
+        task_id="testar_qualidade",
+        bash_command="cd /opt/airflow/projeto-vendas && pytest tests/test_qualidade_dados.py",
+    )
+
     executar_pipeline = BashOperator(
         task_id="executar_pipeline",
         bash_command="cd /opt/airflow/projeto-vendas && python src/tratamento.py",
     )
+
+    testar_qualidade >> executar_pipeline
