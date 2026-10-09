@@ -43,3 +43,7 @@ SELECT
 FROM vendas
 GROUP BY cidade
 ORDER BY total_vendas DESC;
+-- 6. Ticket médio das vendas
+SELECT
+    AVG(faturamento) AS ticket_medio
+FROM vendas;

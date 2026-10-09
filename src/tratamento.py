@@ -1,5 +1,7 @@
+import os
 import pandas as pd
 import psycopg
+
 
 def carregar_dados():
     return pd.read_csv("data/vendas.csv")
@@ -14,6 +16,7 @@ def validar_dados(df):
     print("\nValores nulos:")
     print(df.isnull().sum())
 
+
 def transformar_dados(df):
     df["data"] = pd.to_datetime(df["data"], format="%Y-%m-%d")
     df["faturamento"] = df["quantidade"] * df["preco"]
@@ -24,8 +27,14 @@ def transformar_dados(df):
 def salvar_dados(df):
     df.to_csv("data/vendas_tratadas.csv", index=False)
 
+
 def carregar_no_postgres(df):
-    with psycopg.connect("host=host.docker.internal dbname=pipeline_vendas user=leticia") as conn:
+    with psycopg.connect(
+        host=os.getenv("POSTGRES_HOST"),
+        dbname=os.getenv("POSTGRES_DB"),
+        user=os.getenv("POSTGRES_USER"),
+        password=os.getenv("POSTGRES_PASSWORD"),
+    ) as conn:
         with conn.cursor() as cursor:
             for _, linha in df.iterrows():
                 cursor.execute(
@@ -50,6 +59,7 @@ def carregar_no_postgres(df):
                 )
 
     print("Carga no PostgreSQL concluída!")
+
 
 def main():
     df = carregar_dados()
