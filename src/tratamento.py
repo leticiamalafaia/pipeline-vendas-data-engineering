@@ -44,7 +44,14 @@ def carregar_no_postgres(df):
                         quantidade, preco, cidade, faturamento
                     )
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (id_venda) DO NOTHING
+                    ON CONFLICT (id_venda) DO UPDATE SET
+                        data = EXCLUDED.data,
+                        produto = EXCLUDED.produto,
+                        categoria = EXCLUDED.categoria,
+                        quantidade = EXCLUDED.quantidade,
+                        preco = EXCLUDED.preco,
+                        cidade = EXCLUDED.cidade,
+                        faturamento = EXCLUDED.faturamento
                     """,
                     (
                         int(linha["id_venda"]),
