@@ -28,42 +28,49 @@ def salvar_dados(df):
     df.to_csv("data/vendas_tratadas.csv", index=False)
 
 
-def carregar_no_postgres(df):
-    with psycopg.connect(
-        host=os.getenv("POSTGRES_HOST"),
-        dbname=os.getenv("POSTGRES_DB"),
-        user=os.getenv("POSTGRES_USER"),
-        password=os.getenv("POSTGRES_PASSWORD"),
-    ) as conn:
-        with conn.cursor() as cursor:
-            for _, linha in df.iterrows():
-                cursor.execute(
-                    """
-                    INSERT INTO vendas (
-                        id_venda, data, produto, categoria,
-                        quantidade, preco, cidade, faturamento
-                    )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (id_venda) DO UPDATE SET
-                        data = EXCLUDED.data,
-                        produto = EXCLUDED.produto,
-                        categoria = EXCLUDED.categoria,
-                        quantidade = EXCLUDED.quantidade,
-                        preco = EXCLUDED.preco,
-                        cidade = EXCLUDED.cidade,
-                        faturamento = EXCLUDED.faturamento
-                    """,
-                    (
-                        int(linha["id_venda"]),
-                        linha["data"].date(),
-                        linha["produto"],
-                        linha["categoria"],
-                        int(linha["quantidade"]),
-                        float(linha["preco"]),
-                        linha["cidade"],
-                        float(linha["faturamento"]),
-                    ),
+def _executar_carga(df, conn):
+    with conn.cursor() as cursor:
+        for _, linha in df.iterrows():
+            cursor.execute(
+                """
+                INSERT INTO vendas (
+                    id_venda, data, produto, categoria,
+                    quantidade, preco, cidade, faturamento
                 )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (id_venda) DO UPDATE SET
+                    data = EXCLUDED.data,
+                    produto = EXCLUDED.produto,
+                    categoria = EXCLUDED.categoria,
+                    quantidade = EXCLUDED.quantidade,
+                    preco = EXCLUDED.preco,
+                    cidade = EXCLUDED.cidade,
+                    faturamento = EXCLUDED.faturamento
+                """,
+                (
+                    int(linha["id_venda"]),
+                    linha["data"].date(),
+                    linha["produto"],
+                    linha["categoria"],
+                    int(linha["quantidade"]),
+                    float(linha["preco"]),
+                    linha["cidade"],
+                    float(linha["faturamento"]),
+                ),
+            )
+
+
+def carregar_no_postgres(df, conn=None):
+    if conn is None:
+        with psycopg.connect(
+            host=os.getenv("POSTGRES_HOST"),
+            dbname=os.getenv("POSTGRES_DB"),
+            user=os.getenv("POSTGRES_USER"),
+            password=os.getenv("POSTGRES_PASSWORD"),
+        ) as conexao:
+            _executar_carga(df, conexao)
+    else:
+        _executar_carga(df, conn)
 
     print("Carga no PostgreSQL concluída!")
 
