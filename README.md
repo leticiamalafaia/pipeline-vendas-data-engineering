@@ -107,25 +107,39 @@ Configure essas variáveis no ambiente de execução antes de executar o pipelin
 
 O arquivo `.env` está listado no `.gitignore` para evitar que seja versionado acidentalmente.
 
-## Testes de Qualidade
+## Testes Automatizados
 
-O projeto utiliza Pytest para verificar a qualidade dos dados antes da execução do processamento.
+O projeto utiliza Pytest para validar a qualidade dos dados e verificar o comportamento idempotente da carga no PostgreSQL.
 
-Os testes automatizados verificam:
+A suíte possui seis testes automatizados:
 
-* Unicidade dos identificadores das vendas.
-* Ausência de valores nulos.
-* Quantidades maiores que zero.
-* Preços maiores que zero.
-* Cálculo correto do faturamento.
+**Testes de qualidade dos dados**
+- Unicidade dos identificadores das vendas.
+- Ausência de valores nulos.
+- Quantidades maiores que zero.
+- Preços maiores que zero.
+- Cálculo correto do faturamento.
 
-Para executar os testes localmente, utilize:
+**Teste de integração**
+- Verificação da idempotência da carga no PostgreSQL, garantindo que um mesmo identificador seja atualizado sem gerar registros duplicados. O teste utiliza uma transação com rollback para não manter os dados temporários no banco.
+
+### Executar os testes
+
+Para executar os cinco testes de qualidade localmente:
 
 ```bash
-pytest tests/test_qualidade_dados.py
+pytest tests/test_qualidade_dados.py -v
 ```
 
-A DAG do Apache Airflow executa os testes antes de iniciar o processamento. Se a tarefa de qualidade falhar, a tarefa seguinte não será executada.
+O teste de integração requer acesso ao PostgreSQL e as variáveis de ambiente de conexão configuradas.
+
+No ambiente Docker/Airflow do projeto, a suíte completa pode ser executada com:
+
+```bash
+docker compose exec airflow-worker bash -lc 'cd /opt/airflow/projeto-vendas && pytest tests/ -v'
+```
+
+A DAG `pipeline_vendas` executa os testes antes do processamento. A tarefa `executar_pipeline` só começa depois do sucesso da tarefa `testar_qualidade`.
 
 ## Análises SQL
 
@@ -150,33 +164,57 @@ Essas consultas permitem comparar o desempenho dos produtos, das categorias e da
 
 ## Como Executar o Projeto
 
-### 1. Iniciar o ambiente Docker
+### Pré-requisito do ambiente
 
-Acesse a pasta do Apache Airflow:
+O projeto utiliza um ambiente Apache Airflow executado com Docker Compose. Na configuração de desenvolvimento utilizada para validar este pipeline, o arquivo `docker-compose.yaml` do Airflow fica fora deste repositório.
 
-```bash
-cd ~/Área\ de\ trabalho/Airflow
-```
+Para reproduzir a execução, configure um ambiente compatível com Apache Airflow 3.1.0, PostgreSQL e as dependências do projeto. O repositório deve estar montado no container em `/opt/airflow/projeto-vendas`, com as variáveis de ambiente de conexão ao PostgreSQL configuradas.
 
-Inicie os serviços:
+### 1. Iniciar o ambiente
+
+Entre na pasta que contém o arquivo `docker-compose.yaml` do Airflow e execute:
 
 ```bash
 docker compose up -d
 ```
 
-### 2. Executar o pipeline pelo Airflow
+### 2. Executar o pipeline
 
-Com os serviços iniciados:
+A DAG `pipeline_vendas` pode ser executada pela interface web do Airflow, disponível em `http://localhost:8080`, ou pelo terminal:
 
-1. Acesse a interface web do Airflow em `http://localhost:8080`.
-2. Localize a DAG `pipeline_vendas`.
-3. Acione a execução manual da DAG.
-4. Acompanhe as tarefas `testar_qualidade` e `executar_pipeline`.
+```bash
+docker compose exec airflow-scheduler airflow dags trigger pipeline_vendas
+```
 
-A tarefa de processamento depende do sucesso dos testes de qualidade.
+A DAG possui duas tarefas principais:
 
-### 3. Consultar os resultados
+1. `testar_qualidade`: executa os testes automatizados.
+2. `executar_pipeline`: realiza o tratamento e a carga dos dados no PostgreSQL após o sucesso dos testes.
+
+### 3. Executar os testes manualmente
+
+Para executar a suíte completa no container do Airflow Worker:
+
+```bash
+docker compose exec airflow-worker bash -lc 'cd /opt/airflow/projeto-vendas && pytest tests/ -v'
+```
+
+O teste de integração da idempotência requer acesso ao PostgreSQL e as variáveis de ambiente de conexão configuradas.
+
+### 4. Consultar os resultados
 
 Após a execução, os dados tratados ficam disponíveis no arquivo `data/vendas_tratadas.csv` e na tabela `vendas` do PostgreSQL.
 
 As consultas analíticas estão disponíveis em `sql/analise_vendas.sql`.
+
+Para verificar a quantidade de vendas, os identificadores únicos e o faturamento total, execute no ambiente PostgreSQL:
+
+```sql
+SELECT
+    COUNT(*) AS total_vendas,
+    COUNT(DISTINCT id_venda) AS ids_unicos,
+    SUM(faturamento) AS faturamento_total
+FROM vendas;
+```
+
+Na execução validada durante o desenvolvimento, o resultado foi de 10 vendas, 10 identificadores únicos e faturamento total de R$ 17.750,00.
