@@ -1,5 +1,7 @@
 # Pipeline de Vendas — Engenharia de Dados
 
+[![Testes automatizados](https://github.com/leticiamalafaia/pipeline-vendas-data-engineering/actions/workflows/tests.yml/badge.svg)](https://github.com/leticiamalafaia/pipeline-vendas-data-engineering/actions/workflows/tests.yml)
+
 Projeto de portfólio de Engenharia de Dados que implementa um pipeline para processar dados de vendas, realizar transformações com Python e Pandas e armazenar os resultados em um banco de dados PostgreSQL.
 
 A execução é automatizada com Apache Airflow, utilizando Docker para o ambiente de execução e Pytest para verificar a qualidade dos dados antes do processamento.
